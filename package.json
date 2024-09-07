@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "vue": "^3.4.21",
-    "vuex": "^4.0.2"
+    "vuex": "^4.0.2",
+    "socket.io-client": "^4.7.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
