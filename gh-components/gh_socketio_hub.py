@@ -1,25 +1,68 @@
 """
-Grasshopper Python Component: Socket.IO Hub (WIP)
+Grasshopper Python Component: Socket.IO Hub
 
-This will handle communication with the Flask Hub server.
+Scans for RH_IN: tagged parameter groups and sends them to Flask Hub.
 """
 
 import json
-
-# Placeholder - will need socketio library
-# pip install python-socketio websocket-client
+import Grasshopper as gh
+from Grasshopper.Kernel.Special import GH_NumberSlider
+from System import Decimal
 
 DEFAULT_SERVER_URL = "http://localhost:5001"
 
-def scan_parameters():
-    """TODO: Scan document for RH_IN: tagged groups"""
-    # Will scan for groups named RH_IN:paramName
-    pass
 
-def send_geometry(meshes):
-    """TODO: Send mesh geometry to server"""
-    pass
+def decimal_to_float(d):
+    """Convert .NET Decimal to Python float"""
+    return float(Decimal.ToDouble(d))
+
+
+def scan_tagged_parameters():
+    """Scan document for RH_IN: tagged groups and extract parameter info."""
+    doc = ghenv.Component.OnPingDocument()
+    if doc is None:
+        return []
+
+    parameters = []
+
+    for obj in doc.Objects:
+        if isinstance(obj, gh.Kernel.Special.GH_Group):
+            nickname = obj.NickName
+
+            if nickname and nickname.startswith("RH_IN:"):
+                param_name = nickname[6:]
+                group_objects = obj.ObjectsRecursive()
+
+                slider_value = None
+                slider_min = None
+                slider_max = None
+
+                for group_obj in group_objects:
+                    if isinstance(group_obj, GH_NumberSlider):
+                        slider_value = decimal_to_float(group_obj.Slider.Value)
+                        slider_min = decimal_to_float(group_obj.Slider.Minimum)
+                        slider_max = decimal_to_float(group_obj.Slider.Maximum)
+
+                if slider_value is not None:
+                    param_info = {
+                        "name": param_name,
+                        "value": slider_value,
+                        "min": slider_min,
+                        "max": slider_max
+                    }
+                    parameters.append(param_info)
+
+    return parameters
+
 
 # Main execution
-print("GH Socket Hub component loaded")
-print("TODO: Implement parameter scanning and geometry sending")
+if run:
+    params = scan_tagged_parameters()
+    param_count = len(params)
+    status = f"Found {param_count} parameters"
+    print(status)
+    for p in params:
+        print(f"  - {p['name']}: {p['value']}")
+else:
+    status = "Disabled"
+    param_count = 0
