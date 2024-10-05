@@ -1,21 +1,19 @@
 <template>
   <div id="app">
-    <div class="main-container">
-      <div class="sidebar">
-        <h2>Parameters</h2>
-        <!-- sliders will go here -->
-      </div>
+    <Sidebar />
+    <div class="main-content">
       <div class="viewer">
-        <p>3D Viewer placeholder</p>
+        <p>3D Viewer</p>
       </div>
       <div class="chat">
-        <p>Chat placeholder</p>
+        <p>Chat</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import Sidebar from "./components/Sidebar.vue";
 </script>
 
 <style>
@@ -28,17 +26,13 @@ html, body {
 
 #app {
   height: 100%;
-}
-
-.main-container {
   display: flex;
-  height: 100vh;
 }
 
-.sidebar {
-  width: 200px;
-  background: #f0f0f0;
-  padding: 10px;
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .viewer {
@@ -51,7 +45,7 @@ html, body {
 }
 
 .chat {
-  width: 300px;
+  height: 200px;
   background: #e0e0e0;
   padding: 10px;
 }
