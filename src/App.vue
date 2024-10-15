@@ -3,17 +3,16 @@
     <Sidebar />
     <div class="main-content">
       <div class="viewer">
-        <p>3D Viewer</p>
-      </div>
-      <div class="chat">
-        <p>Chat</p>
+        <p>3D Viewer (coming soon)</p>
       </div>
     </div>
+    <Chat />
   </div>
 </template>
 
 <script setup>
 import Sidebar from "./components/Sidebar.vue";
+import Chat from "./components/Chat.vue";
 </script>
 
 <style>
@@ -22,6 +21,7 @@ html, body {
   padding: 0;
   height: 100%;
   font-family: Arial, sans-serif;
+  overflow: hidden;
 }
 
 #app {
@@ -32,7 +32,6 @@ html, body {
 .main-content {
   flex: 1;
   display: flex;
-  flex-direction: column;
 }
 
 .viewer {
@@ -42,11 +41,5 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.chat {
-  height: 200px;
-  background: #e0e0e0;
-  padding: 10px;
 }
 </style>
