@@ -8,6 +8,7 @@ export default createStore({
             },
             chatMessages: [],
             prompt: "",
+            isThinking: false,
         };
     },
     mutations: {
@@ -25,11 +26,17 @@ export default createStore({
                 state.parameters.inputs[index].value = value;
             }
         },
-        addMessage(state, message) {
-            state.chatMessages.push(message);
+        addMessage(state, { text, type }) {
+            state.chatMessages.push({ text, type: type || "user" });
+        },
+        addResponse(state, text) {
+            state.chatMessages.push({ text, type: "response" });
         },
         setPrompt(state, prompt) {
             state.prompt = prompt;
+        },
+        setThinking(state, value) {
+            state.isThinking = value;
         },
     },
 });
