@@ -9,10 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.4.21",
-    "vuex": "^4.0.2",
+    "@tresjs/cientos": "^3.9.0",
+    "@tresjs/core": "^3.9.0",
     "socket.io-client": "^4.7.2",
-    "vue-3-slider-component": "^0.1.4"
+    "three": "^0.164.1",
+    "vue": "^3.4.21",
+    "vue-3-slider-component": "^0.1.4",
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",

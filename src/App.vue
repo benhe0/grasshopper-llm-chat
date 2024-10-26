@@ -1,17 +1,14 @@
 <template>
   <div id="app">
     <Sidebar />
-    <div class="main-content">
-      <div class="viewer">
-        <p>3D Viewer (coming soon)</p>
-      </div>
-    </div>
+    <MeshViewer />
     <Chat />
   </div>
 </template>
 
 <script setup>
 import Sidebar from "./components/Sidebar.vue";
+import MeshViewer from "./components/MeshViewer.vue";
 import Chat from "./components/Chat.vue";
 </script>
 
@@ -26,20 +23,7 @@ html, body {
 
 #app {
   height: 100%;
-  display: flex;
-}
-
-.main-content {
-  flex: 1;
-  display: flex;
-}
-
-.viewer {
-  flex: 1;
-  background: #333;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  position: relative;
 }
 </style>
