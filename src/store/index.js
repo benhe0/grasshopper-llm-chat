@@ -3,6 +3,7 @@ import { createStore } from 'vuex';
 export default createStore({
     state() {
         return {
+            receivedMeshData: null,
             parameters: {
                 inputs: [],
             },
@@ -12,6 +13,9 @@ export default createStore({
         };
     },
     mutations: {
+        setReceivedMeshData(state, data) {
+            state.receivedMeshData = data;
+        },
         setParameters(state, inputs) {
             state.parameters.inputs = inputs.map((input, index) => ({
                 ...input,
