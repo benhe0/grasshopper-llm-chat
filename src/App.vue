@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <ApiCaller />
     <Sidebar />
     <MeshViewer />
     <Chat />
@@ -7,6 +8,7 @@
 </template>
 
 <script setup>
+import ApiCaller from "./components/ApiCaller.vue";
 import Sidebar from "./components/Sidebar.vue";
 import MeshViewer from "./components/MeshViewer.vue";
 import Chat from "./components/Chat.vue";
