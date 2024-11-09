@@ -3,33 +3,36 @@
 </template>
 
 <script setup>
-import { watch, computed, onMounted, onUnmounted } from "vue";
+import { watch, computed, onMounted } from "vue";
 import { useStore } from "vuex";
-import { initSocket, getSocket } from "../services/socket";
+import { initSocket, getSocket, emitParamsUpdate } from "../services/socket";
 
 const store = useStore();
 const parameters = computed(() => store.state.parameters);
 const prompt = computed(() => store.state.prompt);
 
+let isSyncingFromServer = false;
+
 onMounted(() => {
   const socket = initSocket();
 
   socket.on('params_init', (data) => {
-    console.log('Received initial params:', data);
-    if (data.params && data.params.length > 0) {
+    if (data.params?.length > 0) {
+      isSyncingFromServer = true;
       store.commit('setParameters', data.params);
+      setTimeout(() => { isSyncingFromServer = false; }, 100);
     }
   });
 
   socket.on('params_sync', (data) => {
-    console.log('Params sync:', data);
     if (data.params) {
+      isSyncingFromServer = true;
       store.commit('setParameters', data.params);
+      setTimeout(() => { isSyncingFromServer = false; }, 100);
     }
   });
 
   socket.on('geometry_result', (data) => {
-    console.log('Geometry received');
     if (data.geometry) {
       store.commit('setReceivedMeshData', data.geometry);
     }
@@ -37,14 +40,18 @@ onMounted(() => {
   });
 });
 
-// Watch for prompt changes and send to server
+// Send param updates to server when local sliders change
 watch(
-  () => prompt.value,
-  (newPrompt) => {
-    if (newPrompt && newPrompt.trim()) {
-      console.log('Sending prompt:', newPrompt);
-      // TODO: send via socket
+  () => parameters.value.inputs,
+  (newInputs) => {
+    if (isSyncingFromServer) return;
+    if (newInputs.length > 0) {
+      const params = {};
+      newInputs.forEach(p => { params[p.name] = p.value; });
+      console.log('Sending params:', params);
+      emitParamsUpdate(params);
     }
-  }
+  },
+  { deep: true }
 );
 </script>

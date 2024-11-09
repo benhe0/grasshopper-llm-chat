@@ -7,6 +7,7 @@ export default createStore({
             parameters: {
                 inputs: [],
             },
+            sidebarOpen: true,
             chatMessages: [],
             prompt: "",
             isThinking: false,
@@ -29,6 +30,12 @@ export default createStore({
             if (index !== -1) {
                 state.parameters.inputs[index].value = value;
             }
+        },
+        toggleSidebar(state) {
+            state.sidebarOpen = !state.sidebarOpen;
+        },
+        setSidebarOpen(state, value) {
+            state.sidebarOpen = value;
         },
         addMessage(state, { text, type }) {
             state.chatMessages.push({ text, type: type || "user" });
