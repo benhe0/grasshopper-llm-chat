@@ -1,5 +1,5 @@
 """
-Flask Hub Server - Coordinates between Web App, LLM, and Grasshopper
+Flask Hub Server
 """
 
 from flask import Flask, request, jsonify
@@ -14,7 +14,6 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 connected_clients = set()
 gh_clients = set()
-results = {}
 
 @app.after_request
 def after_request(response):
@@ -33,7 +32,13 @@ def call_llm(prompt, params_json):
 AVAILABLE PARAMETERS:
 {params_json}
 
+INTERPRETATION:
+- "slightly" = 10-20% change
+- "more/increase" = 25-50% change
+- "much/significantly" = 50-100% change
+
 Return ONLY a JSON object with parameter names and new values.
+Use {{}} if no changes apply.
 """
     messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}]
     payload = {"model": DEFAULT_MODEL, "messages": messages, "temperature": 0.3}
@@ -43,6 +48,21 @@ Return ONLY a JSON object with parameter names and new values.
     with urllib.request.urlopen(req, timeout=60) as resp:
         result = json.loads(resp.read().decode("utf-8"))
     return result["choices"][0]["message"]["content"]
+
+
+def parse_llm_response(response):
+    text = response.strip()
+    if "```" in text:
+        parts = text.split("```")
+        for part in parts[1::2]:
+            part = part.strip()
+            if part.startswith("json"):
+                part = part[4:].strip()
+            try:
+                return json.loads(part)
+            except:
+                continue
+    return json.loads(text)
 
 
 @socketio.on('connect')
@@ -63,7 +83,32 @@ def handle_params_update(data):
     params = data.get('params', {})
     for client_sid in gh_clients:
         socketio.emit('params_to_gh', {'params': params}, to=client_sid)
-    emit('params_ack', {'status': 'sent'})
+
+
+@socketio.on('chat_request')
+def handle_chat_request(data):
+    prompt = data.get('prompt')
+    params = data.get('params', [])
+
+    if not prompt:
+        emit('error', {'message': 'No prompt'})
+        return
+
+    try:
+        llm_response = call_llm(prompt, json.dumps(params, indent=2))
+        param_updates = parse_llm_response(llm_response)
+
+        # Broadcast to all web clients
+        web_clients = connected_clients - gh_clients
+        for client_sid in web_clients:
+            socketio.emit('chat_llm_response', {'params': param_updates}, to=client_sid)
+
+        # Send to GH
+        for client_sid in gh_clients:
+            socketio.emit('params_to_gh', {'params': param_updates}, to=client_sid)
+
+    except Exception as e:
+        emit('error', {'message': str(e)})
 
 
 @socketio.on('gh_connect')
@@ -83,65 +128,15 @@ def handle_gh_params_register(data):
 
 @socketio.on('gh_geometry')
 def handle_gh_geometry(data):
-    """GH sends computed geometry."""
-    request_id = data.get('request_id')
     geometry = data.get('geometry')
-
-    # Push to web clients
     web_clients = connected_clients - gh_clients
     for client_sid in web_clients:
-        socketio.emit('geometry_result', {
-            'request_id': request_id,
-            'geometry': geometry
-        }, to=client_sid)
-
-
-@app.route("/geometry_callback", methods=["POST"])
-def geometry_callback():
-    """HTTP fallback for geometry from GH."""
-    body = request.json
-    request_id = body.get("request_id")
-    geometry = body.get("geometry")
-
-    if connected_clients:
-        socketio.emit('geometry_result', {
-            'request_id': request_id,
-            'geometry': geometry
-        })
-
-    return jsonify({"status": "ok"})
+        socketio.emit('geometry_result', {'geometry': geometry}, to=client_sid)
 
 
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"})
-
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    body = request.json
-    prompt = body.get("prompt")
-    params = body.get("params", [])
-
-    if not prompt:
-        return jsonify({"error": "No prompt"}), 400
-
-    request_id = str(uuid.uuid4())
-
-    try:
-        llm_response = call_llm(prompt, json.dumps(params))
-        param_updates = json.loads(llm_response)
-
-        # Send to GH
-        for client_sid in gh_clients:
-            socketio.emit('params_to_gh', {
-                'request_id': request_id,
-                'params': param_updates
-            }, to=client_sid)
-
-        return jsonify({"request_id": request_id, "params": param_updates})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

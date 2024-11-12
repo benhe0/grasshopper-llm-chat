@@ -31,7 +31,7 @@ export function initSocket(url = DEFAULT_URL) {
   });
 
   socket.on('connect_error', (err) => {
-    console.error('[Socket] Connection error:', err);
+    console.error('[Socket] Error:', err);
     connectionState.error = err.message;
   });
 
@@ -46,4 +46,9 @@ export function getSocket() {
 export function emitParamsUpdate(params) {
   const s = getSocket();
   s.emit('params_update', { params });
+}
+
+export function emitChatRequest(prompt, params) {
+  const s = getSocket();
+  s.emit('chat_request', { prompt, params });
 }
