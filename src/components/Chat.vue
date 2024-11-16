@@ -4,7 +4,10 @@
     <ChatMessages :messages="messages" :isThinking="isThinking" />
     <ChatInputContainer
       v-model:inputMessage="inputMessage"
+      v-model:isVoiceInput="isVoiceInput"
+      :isRecording="isRecording"
       @send-message="handleSend"
+      @start-voice-recognition="startRecording"
     />
   </div>
 </template>
@@ -17,8 +20,13 @@ import ChatInputContainer from "./ChatInputContainer.vue";
 
 const store = useStore();
 const inputMessage = ref("");
+const isVoiceInput = ref(false);
+const isRecording = ref(false);
 const messages = computed(() => store.state.chatMessages);
 const isThinking = computed(() => store.state.isThinking);
+
+let mediaRecorder = null;
+let audioChunks = [];
 
 const handleSend = () => {
   if (inputMessage.value.trim()) {
@@ -26,6 +34,36 @@ const handleSend = () => {
     store.commit("setPrompt", inputMessage.value);
     store.commit("setThinking", true);
     inputMessage.value = "";
+  }
+};
+
+const startRecording = async () => {
+  if (isRecording.value) {
+    mediaRecorder?.stop();
+    isRecording.value = false;
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      // TODO: send to transcription endpoint
+      console.log('Recording complete, size:', blob.size);
+    };
+
+    mediaRecorder.start();
+    isRecording.value = true;
+  } catch (err) {
+    console.error('Microphone error:', err);
   }
 };
 </script>
