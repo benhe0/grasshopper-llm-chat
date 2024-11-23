@@ -11,9 +11,13 @@ export default createStore({
             chatMessages: [],
             prompt: "",
             isThinking: false,
+            theme: 'dark',
         };
     },
     mutations: {
+        setTheme(state, theme) {
+            state.theme = theme;
+        },
         setReceivedMeshData(state, data) {
             state.receivedMeshData = data;
         },
@@ -49,5 +53,8 @@ export default createStore({
         setThinking(state, value) {
             state.isThinking = value;
         },
+    },
+    getters: {
+        theme: (state) => state.theme,
     },
 });
