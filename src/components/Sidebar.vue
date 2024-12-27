@@ -1,5 +1,11 @@
 <template>
-  <div class="sidebar" :class="{ 'sidebar-closed': !sidebarOpen }">
+  <div
+    :class="[
+      'sidebar',
+      theme,
+      { 'sidebar-closed': !sidebarOpen, 'sidebar-open': sidebarOpen },
+    ]"
+  >
     <SidebarHeader />
     <SidebarTab :receivedInputs="inputs" />
     <SidebarCollapseButton
@@ -10,33 +16,73 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { useStore } from "vuex";
 import SidebarHeader from "./SidebarTabButtons.vue";
 import SidebarTab from "./SidebarTab.vue";
 import SidebarCollapseButton from "./SidebarCollapseButton.vue";
 
 const store = useStore();
-const sidebarOpen = ref(true);
 const inputs = computed(() => store.state.parameters.inputs);
+const sidebarOpen = computed(() => store.state.sidebarOpen);
+const theme = computed(() => store.state.theme);
 
 const toggleSidebar = () => {
-  sidebarOpen.value = !sidebarOpen.value;
+  store.commit("toggleSidebar");
 };
 </script>
-
 <style scoped>
 .sidebar {
-  width: 250px;
-  background: #f5f5f5;
   height: 100%;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s;
+  width: 17vw;
+  position: absolute;
+  transition: transform 0.3s ease;
+  z-index: 1000; /* Ensure Sidebar is on top */
+  backdrop-filter: blur(5px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-closed {
-  transform: translateX(-230px);
+  transform: translateX(-100%);
+}
+
+.sidebar-open {
+  transform: translateX(0);
+}
+
+/* Dark Theme Styles */
+.dark .sidebar {
+  background-color: rgba(40, 40, 40, 0.9);
+  border-color: rgba(100, 100, 100, 0.8);
+  color: white;
+}
+
+/* Light Theme Styles */
+.light .sidebar {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(200, 200, 200, 0.8);
+  color: black;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 40vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    width: 80vw;
+  }
+
+  .sidebar-closed {
+    transform: translateX(-100%);
+  }
+
+  .sidebar-open {
+    transform: translateX(0);
+  }
 }
 </style>

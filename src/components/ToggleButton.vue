@@ -1,26 +1,57 @@
 <template>
   <label class="switch">
-    <input type="checkbox" :checked="modelValue" @change="$emit('update:modelValue', $event.target.checked)" />
-    <span class="slider">{{ modelValue ? onText : offText }}</span>
+    <input
+      type="checkbox"
+      :checked="isChecked"
+      @change="updateIsVoiceInput($event.target.checked)"
+    />
+    <span class="slider">{{ isChecked ? onText : offText }}</span>
   </label>
 </template>
 
 <script setup>
-defineProps({
-  modelValue: Boolean,
-  onText: { type: String, default: "On" },
-  offText: { type: String, default: "Off" },
+import { defineProps, defineEmits, computed } from "vue";
+
+// Define the props
+const props = defineProps({
+  modelValue: {
+    type: Boolean,
+    required: true,
+  },
+  onText: {
+    type: String,
+    default: "On",
+  },
+  offText: {
+    type: String,
+    default: "Off",
+  },
 });
-defineEmits(["update:modelValue"]);
+
+// Define the emits
+const emit = defineEmits(["update:modelValue"]);
+
+// Computed property for checked state
+const isChecked = computed({
+  get: () => props.modelValue,
+  set: (value) => {
+    emit("update:modelValue", value);
+  },
+});
+
+function updateIsVoiceInput(value) {
+  isChecked.value = value;
+}
 </script>
 
 <style>
 .switch {
   position: relative;
   display: inline-block;
-  width: 100px;
+  width: 120px;
   height: 34px;
   margin: 10px;
+  right: 0;
 }
 
 .switch input {
@@ -63,6 +94,6 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(66px);
+  transform: translateX(86px);
 }
 </style>

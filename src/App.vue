@@ -1,40 +1,62 @@
 <template>
-  <div id="app" :class="theme">
-    <div class="theme-toggle">
-      <ToggleButton v-model="isDarkTheme" onText="Dark" offText="Light" />
+  <div
+    id="app"
+    :class="{
+      'light-theme': theme === 'light',
+      'dark-theme': theme === 'dark',
+    }"
+  >
+    <div class="theme-toggle-container">
+      <ToggleButton
+        :modelValue="isDarkTheme"
+        @update:modelValue="setTheme"
+        onText="Dark"
+        offText="Light"
+      />
     </div>
     <ApiCaller />
-    <Sidebar />
-    <MeshViewer />
     <Chat />
+    <div class="mesh-and-sidebar">
+      <MeshViewer />
+      <Sidebar />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
 import { useStore } from "vuex";
-import ApiCaller from "./components/ApiCaller.vue";
 import Sidebar from "./components/Sidebar.vue";
-import MeshViewer from "./components/MeshViewer.vue";
 import Chat from "./components/Chat.vue";
+import MeshViewer from "./components/MeshViewer.vue";
+import { computed } from "vue";
+import ApiCaller from "./components/ApiCaller.vue";
 import ToggleButton from "./components/ToggleButton.vue";
 
 const store = useStore();
 const theme = computed(() => store.state.theme);
 
+// Computed property to check if the theme is dark
 const isDarkTheme = computed({
   get: () => store.state.theme === "dark",
-  set: (val) => store.commit("setTheme", val ? "dark" : "light"),
+  set: (value) => {
+    store.commit("setTheme", value ? "dark" : "light");
+  },
 });
+
+function setTheme(value) {
+  store.commit("setTheme", value ? "dark" : "light");
+}
 </script>
 
 <style>
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: Arial, sans-serif;
+  width: 100%;
   overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 #app {
@@ -43,18 +65,19 @@ html, body {
   position: relative;
 }
 
-#app.dark {
-  background: #1a1a1a;
+.light-theme {
+  background-color: #fff;
 }
 
-#app.light {
-  background: #ffffff;
+.dark-theme {
+  background-color: #000;
 }
 
-.theme-toggle {
+.theme-toggle-container {
   position: fixed;
-  top: 10px;
-  right: 10px;
+  top: 0;
+  right: 0;
   z-index: 1000;
+  /* padding: 10px; */
 }
 </style>
