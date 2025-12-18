@@ -20,6 +20,7 @@ Configuration via .env file or environment variables:
 
 from flask import Flask, request, jsonify
 from flask_socketio import SocketIO, emit
+from openai import OpenAI
 import json
 import urllib.request
 import uuid
@@ -31,6 +32,7 @@ import re
 import ast
 import traceback
 import whisper
+
 
 # Load .env file if python-dotenv is installed
 try:
@@ -136,6 +138,13 @@ def call_llm(prompt, params_json, api_key=None, model=None, host_url=None):
     api_key = api_key or OPENAI_API_KEY
     model = model or DEFAULT_MODEL
 
+    # Extract base URL (remove /chat/completions if present)
+    base_url = url
+    if base_url.endswith("/chat/completions"):
+        base_url = base_url[:-len("/chat/completions")]
+    elif base_url.endswith("/v1/chat/completions"):
+        base_url = base_url[:-len("/chat/completions")]
+
     system_prompt = f"""You control a parametric 3D model in Grasshopper. Adjust parameters based on user requests.
 
 AVAILABLE PARAMETERS (current values and valid ranges):
@@ -169,35 +178,25 @@ RESPONSE FORMAT:
         {"role": "user", "content": prompt}
     ]
 
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": 0.3  # Lower temperature for more consistent outputs
-    }
+    print(f"Calling LLM: {base_url} with model {model}")
 
-    # Add JSON response format for OpenAI API (improves reliability)
-    # Skip for Ollama (localhost) as support varies by model
-    if "openai.com" in url or "api.openai" in url:
-        payload["response_format"] = {"type": "json_object"}
+    try:
+        # Create OpenAI client with appropriate base_url
+        # For Ollama, api_key can be any non-empty string (it's ignored)
+        client = OpenAI(
+            base_url=base_url,
+            api_key=api_key if api_key else "ollama",  # Ollama ignores the key
+            timeout=120.0
+        )
 
-    headers = {
-        "Content-Type": "application/json",
-    }
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+        )
 
-    # Only add Authorization header if api_key is provided (not needed for Ollama)
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url, data=data, headers=headers, method="POST")
-
-    print(f"Calling LLM: {url} with model {model}")
-
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        result = json.loads(resp.read().decode("utf-8"))
-
-    return result["choices"][0]["message"]["content"]
+        return response.choices[0].message.content
+    except Exception as e:
+        raise ConnectionError(f"LLM call failed: {e}")
 
 
 def parse_llm_response(response):
