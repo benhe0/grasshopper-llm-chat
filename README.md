@@ -124,7 +124,7 @@ Once connected, you can use natural language to control parameters:
 - _"Make it much shorter but slightly wider"_ - Adjusts multiple params
 - _"Double the depth"_ - Doubles the current depth value
 
-![Chat Example](docs/screenshots/chat-conversation.png)
+![Chat Example](images/preview.png)
 
 The LLM interprets relative terms:
 
